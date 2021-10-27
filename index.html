@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital@1&display=swap" rel="stylesheet">
+
+    <title>NASA API</title>
+</head>
+
+<body>
+    <div id="container">
+        <header>
+            <h1>Astronomy Picture Of The Day</h1>
+            <div id="imageContainer"></div>
+            <div id="copyright"></div>
+        </header>
+        <hr>
+        <main>
+
+            <article class='articleContainer' id='earthArticle'>
+                <h3>Mars Weather</h3>
+                <img src="https://services.meteored.com/img/article/des-micro-organismes-terrestres-capables-de-survivre-temporairement-sur-mars-316371-1_1024.jpeg" alt="" class="tbt" id="marswe">
+            </article>
+            <article class='articleContainer' id='idkArticle'>
+                <h3>Wildfire Tracker</h3>
+                <img src="https://images-assets.nasa.gov/image/GSFC_20171208_Archive_e000257/GSFC_20171208_Archive_e000257~thumb.jpg" alt="" class="tbt">
+            </article>
+            <article class='articleContainer' id='marsArticle'>
+                <h3>Near Earth Objects</h3>
+                <img src="https://transferencia.tec.mx/wp-content/uploads/2019/10/Asteroide-3-octubre-2019-2-web-1068x769.jpg" alt="" class="tbt">
+            </article>
+
+        </main>
+    </div>
+    <div id='marsWeather'>
+        <iframe src='https://mars.nasa.gov/layout/embed/image/mslweather/' width='800' height='530' scrolling='no' frameborder='0' id="marsIframe"></iframe>
+        <button>X</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
