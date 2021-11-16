@@ -39,25 +39,29 @@ const getNEO = async () => {
       const elementCount = dataNeo.element_count;
       const neo = dataNeo.near_earth_objects;
       const valuesNEO = Object.values(neo);
-      valuesNEO.forEach((items) => {
+      Object.keys(neo).forEach((items) => {
         divNEO.innerHTML += `<div class="dropdown">
-                                    <button onclick="myFunction()" class="dropbtn">
+                                    <button onclick="myFunction()" class="dropbtn id='hola'">
                                         ${items}
                                     </button>
                                     <div id="myDropdown" class="dropdown-content">
                                     </div>
                                 </div>`;
-      });
-      let x = 0
-      console.log(valuesNEO);
-      console.log(valuesNEO[0][x].id)
+      })
+        
+      const y = getElementById('hola')
+      let x = -1;
+      let xxx = 0;
       for (let i = 0; i < valuesNEO.length;  i++) {
-          x++
-          for (let ii = 0; ii < .length; ii++) {
-              console.log(valuesNEO[0][x]);
-              
-          }
-      }
+        let xx = 0;
+        x++
+        for (let ii = 0; ii < valuesNEO[x].length; ii++) {
+          hola.innerHTML += `<il>${valuesNEO[x][xx]}</il>`
+          console.log(valuesNEO[x][xx].name);
+          xx++
+
+        }
+        }
     });
 };
 getNEO();
