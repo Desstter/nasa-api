@@ -305,6 +305,22 @@ main {
   max-width: 100%;
 }
 
+.mars-fallback {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.mars-fallback a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.mars-fallback a:hover {
+  text-decoration: underline;
+}
+
 /* NEO */
 .neo-count {
   color: var(--text-secondary);
