@@ -1,103 +1,157 @@
-const apiKey = "fD430FM8268SGoczkLpoeuMNN6Ah7aWvBWaYZRj5";
+const API_KEY = "fD430FM8268SGoczkLpoeuMNN6Ah7aWvBWaYZRj5";
+const BASE_URL = "https://api.nasa.gov";
 
-const getAPOTD = async () => {
-  await fetch(`https://api.nasa.gov/planetary/apod?api_key=${apiKey}`)
-    .then((res) => {
-      return res.json();
-    })
-    .then((dataAPOTD) => {
-      const imageContainer = document.getElementById("imageContainer");
-      const copyright = document.getElementById("copyright");
-      if (dataAPOTD.media_type === "video") {
-        imageContainer.innerHTML += `<iframe src='${dataAPOTD.url}'  frameBorder="0"  allowFullScreen id='videoOfDay'></iframe>`;
-      } else {
-        imageContainer.innerHTML += `<img src='${dataAPOTD.url}' id='imageOfDay'>`;
-      }
-      copyright.innerHTML += `<h2 id = 'authorName' > ${dataAPOTD.title}</h2><p id='textOfDay'>${dataAPOTD.explanation}</p > <p id ='date' > ${dataAPOTD.date} </p>`;
-    });
+const padDate = (n) => String(n).padStart(2, "0");
+const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${padDate(d.getMonth() + 1)}-${padDate(d.getDate())}`;
 };
 
-getAPOTD();
-let neoArticle = document.getElementById("neoArticle");
-let divNEO = document.getElementById("neo");
+// --- APOD ---
+const getAPOD = async () => {
+  try {
+    const res = await fetch(`${BASE_URL}/planetary/apod?api_key=${API_KEY}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
-const getNEO = async () => {
-  let currentDate = new Date();
-  let date =
-    currentDate.getFullYear() +
-    "-" +
-    (currentDate.getMonth() + 1) +
-    "-" +
-    currentDate.getDate();
-  await fetch(
-    `https://api.nasa.gov/neo/rest/v1/feed?start_date=${date}&api_key=${apiKey}`
-  )
-    .then((res) => {
-      return res.json();
-    })
-    .then((dataNeo) => {
-      const elementCount = dataNeo.element_count;
-      const neo = dataNeo.near_earth_objects;
-      const valuesNEO = Object.values(neo);
-      Object.keys(neo).forEach((items) => {
-        divNEO.innerHTML += `<div class="dropdown">
-                                    <button onclick="myFunction()" class="dropbtn id='hola'">
-                                        ${items}
-                                    </button>
-                                    <div id="myDropdown" class="dropdown-content">
-                                    </div>
-                                </div>`;
-      })
-        
-      const y = getElementById('hola')
-      let x = -1;
-      let xxx = 0;
-      for (let i = 0; i < valuesNEO.length;  i++) {
-        let xx = 0;
-        x++
-        for (let ii = 0; ii < valuesNEO[x].length; ii++) {
-          hola.innerHTML += `<il>${valuesNEO[x][xx]}</il>`
-          console.log(valuesNEO[x][xx].name);
-          xx++
+    const imageContainer = document.getElementById("imageContainer");
+    const copyright = document.getElementById("copyright");
 
-        }
-        }
-    });
-};
-getNEO();
+    document.getElementById("apodLoader").remove();
 
-let marsArticle = document.getElementById("marsArticle");
-let container = document.getElementById("container");
-let marsWeather = document.getElementById("marsWeather");
-let marsIframe = document.getElementById("marsIframe");
-marsArticle.addEventListener("click", () => {
-  marsWeather.style.display = "block";
-  marsWeather.innerHTML +=
-    "<iframe src='https://mars.nasa.gov/layout/embed/image/mslweather/' width='800' height='530' scrolling='no' frameborder='0' id='marsIframe'></iframe>";
-  container.style.filter = "blur(5px)";
-});
-
-neoArticle.addEventListener("click", () => {
-  divNEO.style.display = "inline-grid";
-  container.style.filter = "blur(5px)";
-});
-
-/* When the user clicks on the button,
-toggle between hiding and showing the dropdown content */
-function myFunction() {
-  document.getElementById("myDropdown").classList.toggle("show");
-}
-
-// Close the dropdown menu if the user clicks outside of it
-window.onclick = function (event) {
-  if (!event.target.matches(".dropbtn")) {
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains("show")) {
-        openDropdown.classList.remove("show");
-      }
+    if (data.media_type === "video") {
+      imageContainer.innerHTML = `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
+    } else {
+      imageContainer.innerHTML = `<img src="${data.url}" id="imageOfDay" alt="${data.title}">`;
     }
+
+    const credit = data.copyright
+      ? `<span class="credit">© ${data.copyright.trim()}</span>`
+      : "";
+
+    copyright.innerHTML = `
+      <h2 id="authorName">${data.title}</h2>
+      ${credit}
+      <p id="date">${data.date}</p>
+      <p id="textOfDay">${data.explanation}</p>
+    `;
+  } catch (err) {
+    const loader = document.getElementById("apodLoader");
+    if (loader) {
+      loader.classList.remove("loader");
+      loader.textContent = "Could not load the Astronomy Picture of the Day.";
+    }
+    console.error("APOD error:", err);
   }
 };
+
+// --- NEO ---
+let neoLoaded = false;
+
+const getNEO = async () => {
+  if (neoLoaded) return;
+
+  const loader = document.getElementById("neoLoader");
+  const divNEO = document.getElementById("neo");
+  const countEl = document.getElementById("neoCount");
+
+  try {
+    const date = todayISO();
+    const res = await fetch(
+      `${BASE_URL}/neo/rest/v1/feed?start_date=${date}&end_date=${date}&api_key=${API_KEY}`
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (loader) loader.remove();
+    neoLoaded = true;
+
+    const allNeos = Object.values(data.near_earth_objects).flat();
+
+    countEl.textContent = `${allNeos.length} asteroid${allNeos.length !== 1 ? "s" : ""} detected near Earth today`;
+
+    if (allNeos.length === 0) {
+      divNEO.innerHTML = "<p>No asteroids detected today.</p>";
+      return;
+    }
+
+    divNEO.innerHTML = allNeos.map((neo) => {
+      const dia = neo.estimated_diameter.kilometers;
+      const diaMin = dia.estimated_diameter_min.toFixed(2);
+      const diaMax = dia.estimated_diameter_max.toFixed(2);
+      const approach = neo.close_approach_data[0];
+      const velocity = parseFloat(approach.relative_velocity.kilometers_per_hour)
+        .toLocaleString("en-US", { maximumFractionDigits: 0 });
+      const distance = parseFloat(approach.miss_distance.kilometers)
+        .toLocaleString("en-US", { maximumFractionDigits: 0 });
+      const hazardous = neo.is_potentially_hazardous_asteroid;
+
+      return `
+        <div class="neo-card${hazardous ? " hazardous" : ""}">
+          <div class="neo-header">
+            <span class="neo-name">${neo.name.replace(/[()]/g, "")}</span>
+            ${hazardous ? '<span class="hazard-badge">&#9888; Potentially Hazardous</span>' : ""}
+          </div>
+          <div class="neo-details">
+            <div class="neo-stat">
+              <span class="neo-label">Diameter</span>
+              <span class="neo-value">${diaMin} – ${diaMax} km</span>
+            </div>
+            <div class="neo-stat">
+              <span class="neo-label">Velocity</span>
+              <span class="neo-value">${velocity} km/h</span>
+            </div>
+            <div class="neo-stat">
+              <span class="neo-label">Miss Distance</span>
+              <span class="neo-value">${distance} km</span>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+  } catch (err) {
+    if (loader) loader.remove();
+    divNEO.innerHTML = "<p>Failed to load asteroid data. Please try again later.</p>";
+    console.error("NEO error:", err);
+  }
+};
+
+// --- Modals ---
+const openModal = (id) => {
+  document.getElementById(id).classList.add("active");
+  document.getElementById("container").classList.add("blurred");
+  document.body.style.overflow = "hidden";
+};
+
+const closeModal = (id) => {
+  document.getElementById(id).classList.remove("active");
+  document.getElementById("container").classList.remove("blurred");
+  document.body.style.overflow = "";
+};
+
+document.getElementById("marsArticle").addEventListener("click", () => openModal("marsModal"));
+document.getElementById("marsArticle").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") openModal("marsModal");
+});
+document.getElementById("marsClose").addEventListener("click", () => closeModal("marsModal"));
+
+document.getElementById("neoArticle").addEventListener("click", () => {
+  openModal("neoModal");
+  getNEO();
+});
+document.getElementById("neoArticle").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") { openModal("neoModal"); getNEO(); }
+});
+document.getElementById("neoClose").addEventListener("click", () => closeModal("neoModal"));
+
+document.querySelectorAll(".modal").forEach((modal) => {
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal(modal.id);
+  });
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") ["marsModal", "neoModal"].forEach(closeModal);
+});
+
+// --- Init ---
+getAPOD();

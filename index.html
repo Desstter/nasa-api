@@ -1,43 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Explorer</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital@1&display=swap" rel="stylesheet">
-
-    <title>NASA API</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <div id="stars"></div>
+
     <div id="container">
         <header>
-            <h1>Astronomy Picture Of The Day</h1>
-            <div id="imageContainer"></div>
+            <h1>NASA Explorer</h1>
+            <p class="subtitle">Astronomy Picture of the Day</p>
+            <div id="imageContainer">
+                <div class="loader" id="apodLoader"></div>
+            </div>
             <div id="copyright"></div>
         </header>
-        <hr>    
-        <main>
 
-            <article class='articleContainer' id='marsArticle'>
-                <h3>Mars Weather</h3>
-                <img src="https://services.meteored.com/img/article/des-micro-organismes-terrestres-capables-de-survivre-temporairement-sur-mars-316371-1_1024.jpeg" alt="" class="tbt" id="marswe">
+        <hr>
+
+        <main>
+            <article class="articleContainer" id="marsArticle" role="button" tabindex="0" aria-label="Open Mars Weather">
+                <div class="card-overlay">
+                    <h3>Mars Weather</h3>
+                    <p class="card-desc">Current conditions on the Red Planet</p>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg" alt="Mars" class="card-img">
             </article>
-            <article class='articleContainer' id='neoArticle'>
-                <h3>Near Earth Objects</h3>
-                <img src="https://transferencia.tec.mx/wp-content/uploads/2019/10/Asteroide-3-octubre-2019-2-web-1068x769.jpg" alt="" class="tbt">
+
+            <article class="articleContainer" id="neoArticle" role="button" tabindex="0" aria-label="Open Near Earth Objects">
+                <div class="card-overlay">
+                    <h3>Near Earth Objects</h3>
+                    <p class="card-desc">Asteroids approaching Earth today</p>
+                </div>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/1024px-The_Earth_seen_from_Apollo_17.jpg" alt="Earth from space" class="card-img">
             </article>
         </main>
     </div>
-    <div id='marsWeather'>
-        
+
+    <!-- Mars Weather Modal -->
+    <div id="marsModal" class="modal" role="dialog" aria-modal="true" aria-label="Mars Weather">
+        <div class="modal-content">
+            <button class="modal-close" id="marsClose" aria-label="Close Mars Weather">&times;</button>
+            <h2>Mars Weather</h2>
+            <iframe src="https://mars.nasa.gov/layout/embed/image/mslweather/"
+                    width="100%" height="530" scrolling="no" frameborder="0"
+                    title="Mars Weather Dashboard"></iframe>
+        </div>
     </div>
-    <div id="neo">
-        
+
+    <!-- NEO Modal -->
+    <div id="neoModal" class="modal" role="dialog" aria-modal="true" aria-label="Near Earth Objects">
+        <div class="modal-content">
+            <button class="modal-close" id="neoClose" aria-label="Close Near Earth Objects">&times;</button>
+            <h2>Near Earth Objects</h2>
+            <p id="neoCount" class="neo-count"></p>
+            <div class="loader" id="neoLoader"></div>
+            <div id="neo"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
