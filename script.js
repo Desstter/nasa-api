@@ -20,7 +20,10 @@ const getAPOD = async () => {
     document.getElementById("apodLoader").remove();
 
     if (data.media_type === "video") {
-      imageContainer.innerHTML = `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
+      const isDirectVideo = /\.(mp4|webm|ogg)(?:\?|$)/i.test(data.url);
+      imageContainer.innerHTML = isDirectVideo
+        ? `<video src="${data.url}" id="videoOfDay" title="${data.title}" controls autoplay muted loop playsinline preload="auto"></video>`
+        : `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
     } else {
       imageContainer.innerHTML = `<img src="${data.url}" id="imageOfDay" alt="${data.title}">`;
     }
