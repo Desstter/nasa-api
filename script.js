@@ -1,6 +1,4 @@
-// DEMO_KEY is provided by NASA for public examples and avoids shipping an
-// expired personal key in this static site.
-const API_KEY = "DEMO_KEY";
+const API_KEY = "ytbhtcfod205VyemKtuDW0KNfB6XsdRW664GFLhS";
 const BASE_URL = "https://api.nasa.gov";
 const MARS_WEATHER_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json";
 const fetchWithTimeout = (url, timeout = 12000) => {
