@@ -1,5 +1,8 @@
-const API_KEY = "fD430FM8268SGoczkLpoeuMNN6Ah7aWvBWaYZRj5";
+// DEMO_KEY is provided by NASA for public examples and avoids shipping an
+// expired personal key in this static site.
+const API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.nasa.gov";
+const MARS_WEATHER_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json";
 
 const padDate = (n) => String(n).padStart(2, "0");
 const todayISO = () => {
@@ -8,37 +11,55 @@ const todayISO = () => {
 };
 
 // --- APOD ---
+const renderAPOD = (data) => {
+  const imageContainer = document.getElementById("imageContainer");
+  const copyright = document.getElementById("copyright");
+  const loader = document.getElementById("apodLoader");
+
+  if (loader) loader.remove();
+
+  if (data.media_type === "video") {
+    const isDirectVideo = /\.(mp4|webm|ogg)(?:\?|$)/i.test(data.url);
+    imageContainer.innerHTML = isDirectVideo
+      ? `<video src="${data.url}" id="videoOfDay" title="${data.title}" controls autoplay muted loop playsinline preload="auto"></video>`
+      : `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
+  } else {
+    imageContainer.innerHTML = `<img src="${data.url}" id="imageOfDay" alt="${data.title}">`;
+  }
+
+  const credit = data.copyright
+    ? `<span class="credit">© ${data.copyright.trim()}</span>`
+    : "";
+
+  copyright.innerHTML = `
+    <h2 id="authorName">${data.title}</h2>
+    ${credit}
+    <p id="date">${data.date}</p>
+    <p id="textOfDay">${data.explanation}</p>
+  `;
+};
+
 const getAPOD = async () => {
   try {
     const res = await fetch(`${BASE_URL}/planetary/apod?api_key=${API_KEY}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
-    const imageContainer = document.getElementById("imageContainer");
-    const copyright = document.getElementById("copyright");
-
-    document.getElementById("apodLoader").remove();
-
-    if (data.media_type === "video") {
-      const isDirectVideo = /\.(mp4|webm|ogg)(?:\?|$)/i.test(data.url);
-      imageContainer.innerHTML = isDirectVideo
-        ? `<video src="${data.url}" id="videoOfDay" title="${data.title}" controls autoplay muted loop playsinline preload="auto"></video>`
-        : `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
-    } else {
-      imageContainer.innerHTML = `<img src="${data.url}" id="imageOfDay" alt="${data.title}">`;
+    try { localStorage.setItem("nasa-apod", JSON.stringify(data)); } catch (cacheErr) {
+      console.warn("APOD cache unavailable:", cacheErr);
     }
-
-    const credit = data.copyright
-      ? `<span class="credit">© ${data.copyright.trim()}</span>`
-      : "";
-
-    copyright.innerHTML = `
-      <h2 id="authorName">${data.title}</h2>
-      ${credit}
-      <p id="date">${data.date}</p>
-      <p id="textOfDay">${data.explanation}</p>
-    `;
+    renderAPOD(data);
   } catch (err) {
+    // Keep the page useful when NASA's shared DEMO_KEY quota is temporarily
+    // unavailable. The cache is populated after any successful request.
+    try {
+      const cached = JSON.parse(localStorage.getItem("nasa-apod"));
+      if (cached?.url && cached?.title) {
+        renderAPOD(cached);
+        return;
+      }
+    } catch (cacheErr) {
+      console.error("APOD cache error:", cacheErr);
+    }
     const loader = document.getElementById("apodLoader");
     if (loader) {
       loader.classList.remove("loader");
@@ -118,6 +139,53 @@ const getNEO = async () => {
   }
 };
 
+// --- Mars Weather ---
+const getMarsWeather = async () => {
+  const container = document.getElementById("marsWeather");
+  const loader = document.getElementById("marsLoader");
+
+  try {
+    const res = await fetch(MARS_WEATHER_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const observations = data.soles?.slice(0, 7) || [];
+    if (!observations.length) throw new Error("No weather observations returned");
+
+    const latest = observations[0];
+    const formatTemp = (value) => value === "--" || value == null ? "N/A" : `${value}°C`;
+    const formatDate = (value) => new Date(`${value}T00:00:00Z`).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
+    });
+
+    container.innerHTML = `
+      <div class="mars-current">
+        <p class="mars-location">Latest weather at Gale Crater</p>
+        <div class="mars-date">Sol ${latest.sol} · ${formatDate(latest.terrestrial_date)}</div>
+        <div class="mars-temperatures">
+          <div><span>High</span><strong>${formatTemp(latest.max_temp)}</strong></div>
+          <div><span>Low</span><strong>${formatTemp(latest.min_temp)}</strong></div>
+        </div>
+        <div class="mars-details">
+          <span>Pressure <strong>${latest.pressure === "--" ? "N/A" : `${latest.pressure} Pa`}</strong></span>
+          <span>Conditions <strong>${latest.atmo_opacity === "--" ? "N/A" : latest.atmo_opacity}</strong></span>
+        </div>
+      </div>
+      <h3 class="mars-history-title">Recent observations</h3>
+      <div class="mars-history">
+        ${observations.map((observation) => `
+          <div class="mars-observation">
+            <span>Sol ${observation.sol}</span>
+            <span>${formatDate(observation.terrestrial_date)}</span>
+            <span>${formatTemp(observation.min_temp)} – ${formatTemp(observation.max_temp)}</span>
+          </div>`).join("")}
+      </div>`;
+  } catch (err) {
+    if (loader) loader.remove();
+    container.innerHTML = `<p class="mars-error">Could not load Mars weather right now. Please use the NASA link below.</p>`;
+    console.error("Mars weather error:", err);
+  }
+};
+
 // --- Modals ---
 const openModal = (id) => {
   document.getElementById(id).classList.add("active");
@@ -131,9 +199,15 @@ const closeModal = (id) => {
   document.body.style.overflow = "";
 };
 
-document.getElementById("marsArticle").addEventListener("click", () => openModal("marsModal"));
+document.getElementById("marsArticle").addEventListener("click", () => {
+  openModal("marsModal");
+  getMarsWeather();
+});
 document.getElementById("marsArticle").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") openModal("marsModal");
+  if (e.key === "Enter" || e.key === " ") {
+    openModal("marsModal");
+    getMarsWeather();
+  }
 });
 document.getElementById("marsClose").addEventListener("click", () => closeModal("marsModal"));
 

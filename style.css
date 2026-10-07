@@ -297,13 +297,30 @@ main {
   border-color: var(--accent);
 }
 
-/* Mars iframe */
-#marsModal iframe {
-  border-radius: 8px;
-  display: block;
-  margin-top: 0.25rem;
-  max-width: 100%;
+/* Mars weather */
+#marsWeather { min-height: 280px; }
+#marsWeather > .loader { margin: 8rem auto; }
+.mars-current {
+  background: linear-gradient(135deg, rgba(79, 195, 247, 0.12), rgba(224, 64, 251, 0.08));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem;
 }
+.mars-location, .mars-date { color: var(--text-secondary); }
+.mars-location { font-size: 0.9rem; }
+.mars-date { font-size: 0.8rem; margin-top: 0.35rem; }
+.mars-temperatures { display: flex; gap: 3rem; margin: 1.5rem 0; }
+.mars-temperatures div { display: flex; flex-direction: column; gap: 0.25rem; }
+.mars-temperatures span, .mars-details span, .mars-history-title { color: var(--text-secondary); font-size: 0.75rem; }
+.mars-temperatures strong { color: var(--accent); font-size: 1.5rem; }
+.mars-details { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.8rem; }
+.mars-details strong { color: var(--text-primary); font-weight: 400; margin-left: 0.25rem; }
+.mars-history-title { margin: 1.25rem 0 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.mars-history { display: flex; flex-direction: column; gap: 0.45rem; }
+.mars-observation { display: grid; grid-template-columns: 0.7fr 1fr 1.2fr; gap: 0.5rem; background: var(--card-bg); border-radius: 6px; padding: 0.65rem 0.8rem; font-size: 0.78rem; }
+.mars-observation span:first-child { color: var(--accent); }
+.mars-observation span:nth-child(2) { color: var(--text-secondary); }
+.mars-error { color: #ff8a80; padding: 2rem 0; text-align: center; }
 
 .mars-fallback {
   margin-top: 0.75rem;
