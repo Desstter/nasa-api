@@ -3,14 +3,6 @@
 const API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.nasa.gov";
 const MARS_WEATHER_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json";
-// NASA's APOD record for 2026-10-07 currently contains the NASA logo instead
-// of the Pa 30 image. Keep a verified NASA Science asset for that bad record.
-const APOD_IMAGE_FALLBACKS = {
-  "2026-10-07": {
-    title: "Supernova Remnant Pa 30",
-    url: "https://assets.science.nasa.gov/content/dam/science/cds/apod/apod/2026/october/noirlab2624a.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg"
-  }
-};
 const fetchWithTimeout = (url, timeout = 12000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -24,13 +16,22 @@ const todayISO = () => {
 };
 
 // --- APOD ---
+const isValidAPOD = (data) => {
+  if (!data?.title || !data?.date || !data?.url) return false;
+  if (data.media_type === "video") return true;
+  try {
+    const imageURL = new URL(data.hdurl || data.url);
+    return /^https?:$/.test(imageURL.protocol) && !/logo|wordmark/i.test(imageURL.pathname);
+  } catch {
+    return false;
+  }
+};
+
 const renderAPOD = (data) => {
   const imageContainer = document.getElementById("imageContainer");
   const copyright = document.getElementById("copyright");
   const loader = document.getElementById("apodLoader");
-  const fallback = APOD_IMAGE_FALLBACKS[data.date];
-  const imageURL = fallback?.url || data.hdurl || data.url;
-  const title = fallback?.title || data.title;
+  if (!isValidAPOD(data)) throw new Error("NASA returned an invalid APOD image");
 
   if (loader) loader.remove();
 
@@ -40,9 +41,11 @@ const renderAPOD = (data) => {
       ? `<video src="${data.url}" id="videoOfDay" title="${data.title}" controls autoplay muted loop playsinline preload="auto"></video>`
       : `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
   } else {
-    // APOD's `url` can be a resized preview. Prefer `hdurl` so the wide
-    // feature panel does not enlarge a small image and make it look blurry.
-    imageContainer.innerHTML = `<img src="${imageURL}" id="imageOfDay" alt="${title}" loading="eager" decoding="async">`;
+    // Use the image URL returned by NASA's APOD API, preferring its HD URL.
+    imageContainer.innerHTML = `<img src="${data.hdurl || data.url}" id="imageOfDay" alt="${data.title}" loading="eager" decoding="async">`;
+    document.getElementById("imageOfDay").addEventListener("error", () => {
+      imageContainer.textContent = "NASA could not provide the Astronomy Picture of the Day image.";
+    }, { once: true });
   }
 
   const credit = data.copyright
@@ -50,7 +53,7 @@ const renderAPOD = (data) => {
     : "";
 
   copyright.innerHTML = `
-    <h2 id="authorName">${title}</h2>
+    <h2 id="authorName">${data.title}</h2>
     ${credit}
     <p id="date">${data.date}</p>
     <p id="textOfDay">${data.explanation}</p>
@@ -62,16 +65,17 @@ const getAPOD = async () => {
     const res = await fetchWithTimeout(`${BASE_URL}/planetary/apod?api_key=${API_KEY}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    if (!isValidAPOD(data)) throw new Error("NASA returned an invalid APOD image");
+    renderAPOD(data);
     try { localStorage.setItem("nasa-apod", JSON.stringify(data)); } catch (cacheErr) {
       console.warn("APOD cache unavailable:", cacheErr);
     }
-    renderAPOD(data);
   } catch (err) {
     // Keep the page useful when NASA's shared DEMO_KEY quota is temporarily
     // unavailable. The cache is populated after any successful request.
     try {
       const cached = JSON.parse(localStorage.getItem("nasa-apod"));
-      if (cached?.url && cached?.title) {
+      if (isValidAPOD(cached)) {
         renderAPOD(cached);
         return;
       }
