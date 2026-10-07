@@ -3,6 +3,11 @@
 const API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.nasa.gov";
 const MARS_WEATHER_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json";
+const fetchWithTimeout = (url, timeout = 12000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+};
 
 const padDate = (n) => String(n).padStart(2, "0");
 const todayISO = () => {
@@ -41,7 +46,7 @@ const renderAPOD = (data) => {
 
 const getAPOD = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/planetary/apod?api_key=${API_KEY}`);
+    const res = await fetchWithTimeout(`${BASE_URL}/planetary/apod?api_key=${API_KEY}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     try { localStorage.setItem("nasa-apod", JSON.stringify(data)); } catch (cacheErr) {
@@ -145,7 +150,7 @@ const getMarsWeather = async () => {
   const loader = document.getElementById("marsLoader");
 
   try {
-    const res = await fetch(MARS_WEATHER_URL);
+    const res = await fetchWithTimeout(MARS_WEATHER_URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const observations = data.soles?.slice(0, 7) || [];
