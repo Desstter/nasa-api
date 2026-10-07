@@ -94,7 +94,8 @@ h1 {
 #imageOfDay {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #0d0d1f;
   display: block;
 }
 

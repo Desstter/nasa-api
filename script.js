@@ -29,7 +29,10 @@ const renderAPOD = (data) => {
       ? `<video src="${data.url}" id="videoOfDay" title="${data.title}" controls autoplay muted loop playsinline preload="auto"></video>`
       : `<iframe src="${data.url}" frameborder="0" allowfullscreen id="videoOfDay" title="${data.title}"></iframe>`;
   } else {
-    imageContainer.innerHTML = `<img src="${data.url}" id="imageOfDay" alt="${data.title}">`;
+    // APOD's `url` can be a resized preview. Prefer `hdurl` so the wide
+    // feature panel does not enlarge a small image and make it look blurry.
+    const imageURL = data.hdurl || data.url;
+    imageContainer.innerHTML = `<img src="${imageURL}" id="imageOfDay" alt="${data.title}" loading="eager" decoding="async">`;
   }
 
   const credit = data.copyright
