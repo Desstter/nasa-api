@@ -3,6 +3,14 @@
 const API_KEY = "DEMO_KEY";
 const BASE_URL = "https://api.nasa.gov";
 const MARS_WEATHER_URL = "https://mars.nasa.gov/rss/api/?feed=weather&category=msl&feedtype=json";
+// NASA's APOD record for 2026-10-07 currently contains the NASA logo instead
+// of the Pa 30 image. Keep a verified NASA Science asset for that bad record.
+const APOD_IMAGE_FALLBACKS = {
+  "2026-10-07": {
+    title: "Supernova Remnant Pa 30",
+    url: "https://assets.science.nasa.gov/content/dam/science/cds/apod/apod/2026/october/noirlab2624a.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg"
+  }
+};
 const fetchWithTimeout = (url, timeout = 12000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
@@ -20,6 +28,9 @@ const renderAPOD = (data) => {
   const imageContainer = document.getElementById("imageContainer");
   const copyright = document.getElementById("copyright");
   const loader = document.getElementById("apodLoader");
+  const fallback = APOD_IMAGE_FALLBACKS[data.date];
+  const imageURL = fallback?.url || data.hdurl || data.url;
+  const title = fallback?.title || data.title;
 
   if (loader) loader.remove();
 
@@ -31,8 +42,7 @@ const renderAPOD = (data) => {
   } else {
     // APOD's `url` can be a resized preview. Prefer `hdurl` so the wide
     // feature panel does not enlarge a small image and make it look blurry.
-    const imageURL = data.hdurl || data.url;
-    imageContainer.innerHTML = `<img src="${imageURL}" id="imageOfDay" alt="${data.title}" loading="eager" decoding="async">`;
+    imageContainer.innerHTML = `<img src="${imageURL}" id="imageOfDay" alt="${title}" loading="eager" decoding="async">`;
   }
 
   const credit = data.copyright
@@ -40,7 +50,7 @@ const renderAPOD = (data) => {
     : "";
 
   copyright.innerHTML = `
-    <h2 id="authorName">${data.title}</h2>
+    <h2 id="authorName">${title}</h2>
     ${credit}
     <p id="date">${data.date}</p>
     <p id="textOfDay">${data.explanation}</p>
